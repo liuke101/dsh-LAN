@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.8] — 2026-10-28（fork 修复：SSH 隧道下的工作区选择器）
+
+**运行时代码改动**：`src/client/picker-logic.ts` 与 `src/client/workspace-flow.ts`（含单测），兼容声明不变（`0.2.1-rc.4`，支持范围 `>=0.1.7-rc.1 <0.3.0`）。
+
+- 问题：通过 SSH 端口转发以 `http://127.0.0.1:<port>` 访问 headless 服务器时，点「选择工作区」报 `directoryPicker.pick needs the native capability; the composed picker serves "browse"`。两个根因：① `directoryFlowDecision` 把 loopback hostname 当作「浏览器就在 dsh 主机上」的证据选 `native`，而隧道场景 loopback 只是本机回环，服务器没有可弹选择器的显示会话；② 影子目录流以 `priority: -20` 注册（`single` 槽渲染最低优先级），把官方 browse 对话框完全遮蔽，而本插件的底部弹层只支持浏览+选择，不能新建文件夹。
+- 修复①：`directoryFlowDecision` 删除 loopback→`native` 分支——OS 对话框可达只由桌面壳标记（preload picker、`electron`/`__DSH_NATIVE_HOST__`、`file:`/`app:`/`vscode-webview:` 协议、Electron UA）证明；其余一律 `browse`。
+- 修复②：`FLOW_PRIORITY` 从 `-20` 改为 `+20`，影子注册让位给官方对话框（默认 `priority: 0`）。官方 browse 面驱动主机的 `list`/`createDirectory` 原语，支持新建文件夹，桌面与手机都可用。影子注册与整套决策逻辑保留：宿主端解析错误（老版本把远程浏览器误判成 `native`）时，把该常量翻回负数即可恢复遮蔽。
+- 单测同步：loopback 判定改为断言 `browse`；`FLOW_PRIORITY` 断言 `> 0`；`registerDirectoryFlow` 的注释改为「让位注册」。
+- 验证：picker 逻辑 16 项单测全绿；`tsc --noEmit` 通过；构建产物 `lib/client.js` 含两处 `priority: 20` 且 loopback→`native` 分支已消失；目标服务器（DSH 0.2.1-rc.2，SSH 隧道 + 网关 8081 / upstream 8080）实测「添加工作区 → 新建文件夹」端到端成功，官方对话框在 loopback 客户端正常出现。
+
 ## [0.7.7] — 2026-10-27（适配 DSH 0.2.1-rc.4）
 
 **代码零改动**，只更新兼容声明、开发依赖与发布文档。

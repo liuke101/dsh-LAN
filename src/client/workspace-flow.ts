@@ -2,18 +2,21 @@
  * dsh-lan-guard — the browser half of the remote workspace picker.
  *
  * DSH's directory-picker seam is resolved once per PROCESS
- * (`@deepseek-ai/dsh-host-directory-picker-auto`), and because DSH's own web
- * server binds loopback that resolution is `native` on macOS/Windows: the OS
- * folder dialog opens on the HOST screen. A phone that reached this machine
- * through the LAN gateway therefore cannot add a workspace at all.
+ * (`@deepseek-ai/dsh-host-directory-picker-auto`). Current releases sample
+ * the SSH-launch marker, so a headless server reached through a tunnel
+ * resolves to `browse` and mounts the official in-app dialog — which, unlike
+ * this module's bottom sheet, also creates folders.
  *
- * A `single` slot renders its LOWEST-priority occupant, so this module registers
- * a shadowing occupant at {@link FLOW_PRIORITY} and decides per CLIENT:
+ * A `single` slot renders its LOWEST-priority occupant. The fork registers
+ * this module's occupant at a POSITIVE {@link FLOW_PRIORITY} so the official
+ * surface (priority 0) always wins the seat and this bottom sheet yields; the
+ * per-client decision is kept as the fallback for hosts whose resolution is
+ * wrong (an older DSH resolving `native` for a remote browser), where:
  *
- * - a browser sitting at this machine delegates to DSH's own picker (the desktop
- *   preload when present, otherwise the official `uiWorkspace.pickDirectory()`),
- *   so the operator's OS dialog is untouched;
- * - a remote browser gets this module's own bottom-sheet directory browser,
+ * - a desktop shell delegates to DSH's own picker (the preload when present,
+ *   otherwise `uiWorkspace.pickDirectory()`), so the operator's OS dialog is
+ *   untouched;
+ * - every other client gets this module's own bottom-sheet directory browser,
  *   backed by one management route (`GET …/workspaces?path=…`).
  *
  * The occupant is RENDERLESS until a pick is requested, and it never registers a

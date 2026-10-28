@@ -46,9 +46,11 @@ describe('isLoopbackHostname', () => {
 })
 
 describe('directoryFlowDecision', () => {
-  it('gives the OS dialog to a browser sitting at this machine', () => {
-    expect(directoryFlowDecision(remote({ hostname: '127.0.0.1' }))).toBe('native')
-    expect(directoryFlowDecision(remote({ hostname: 'localhost' }))).toBe('native')
+  it('does not trust loopback: a tunnel reaches a remote headless host over 127.0.0.1', () => {
+    // An SSH-forwarded port is the loopback case that used to call `pick()`
+    // and fail with `needs the native capability` against a browse host.
+    expect(directoryFlowDecision(remote({ hostname: '127.0.0.1' }))).toBe('browse')
+    expect(directoryFlowDecision(remote({ hostname: 'localhost' }))).toBe('browse')
   })
 
   it('gives the OS dialog to a desktop shell even on a non-loopback hostname', () => {
@@ -63,8 +65,10 @@ describe('directoryFlowDecision', () => {
     expect(directoryFlowDecision(remote({ hostname: '10.0.0.30', protocol: 'http:' }))).toBe('browse')
   })
 
-  it('registers BELOW DSH’s own occupant, because a single slot renders the lowest priority', () => {
-    expect(FLOW_PRIORITY).toBeLessThan(0)
+  it('registers ABOVE DSH’s own occupant, so the official folder-capable dialog wins the single seat', () => {
+    // A `single` slot renders the lowest priority: the official surface
+    // registers at 0, so this fork must stay positive to yield.
+    expect(FLOW_PRIORITY).toBeGreaterThan(0)
   })
 
   it('points at the management route the host actually serves', () => {
@@ -151,7 +155,7 @@ describe('registerDirectoryFlow', () => {
     }
   }
 
-  it('shadows the official occupant in BOTH holes at a lower priority', () => {
+  it('registers in BOTH holes, at a priority that yields to the official occupant', () => {
     const fake = fakeSlots()
     const component = { marker: 'occupant' }
     registerDirectoryFlow(fake.slots, component, {
@@ -161,8 +165,9 @@ describe('registerDirectoryFlow', () => {
     expect(fake.seats).toEqual([HERO_FLOW, SIDEBAR_FLOW])
     expect(fake.registered.map(entry => entry.options.name)).toEqual([HERO_FLOW, SIDEBAR_FLOW])
     for (const entry of fake.registered) {
-      // A `single` slot renders the lowest priority, so anything >= 0 would
-      // either collide with DSH's own surface or never render.
+      // The fork keeps the registration but at a yielding priority: a
+      // `single` slot renders the lowest, so the official folder-capable
+      // surface at 0 wins while this shadow sits above it.
       expect(entry.options.priority).toBe(FLOW_PRIORITY)
       expect(entry.component).toBe(component)
     }

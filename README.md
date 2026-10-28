@@ -148,11 +148,12 @@ The plugin reads its config from its Cordis entry. **Every key has a usable defa
 
 ## Compatibility
 
-Current version: plugin **`0.7.7`**, compatible with DeepSeek Harness **`0.2.1-rc.4`**. Each row below is one plugin release: the DSH versions it was verified against, and what that release did.
+Current version: plugin **`0.7.8`**, compatible with DeepSeek Harness **`0.2.1-rc.4`**. Each row below is one plugin release: the DSH versions it was verified against, and what that release did.
 
 | Plugin | Verified DeepSeek Harness | What this version is |
 | --- | --- | --- |
-| **`0.7.7`** (latest) | **`0.2.1-rc.4`**, `0.2.1-rc.3`, `0.2.1-rc.2`, `0.2.1-alpha.5`, `0.2.1-alpha.4`, `0.2.1-alpha.3`, `0.2.1-alpha.1`, `0.2.0-rc.2`, `0.2.0-rc.1`, `0.1.7-rc.2`, `0.1.7-rc.1` | Keeps up with DSH `0.2.1-rc.4`: this upstream release only bumps version strings, and the host interfaces and types are byte-identical to rc.3; no plugin runtime code changed. |
+| **`0.7.8`** (latest) | **`0.2.1-rc.4`**, `0.2.1-rc.3`, `0.2.1-rc.2`, `0.2.1-alpha.5`, `0.2.1-alpha.4`, `0.2.1-alpha.3`, `0.2.1-alpha.1`, `0.2.0-rc.2`, `0.2.0-rc.1`, `0.1.7-rc.2`, `0.1.7-rc.1` | Fork fix for the workspace picker on SSH-tunnelled loopback deployments: the shadow flow occupant registers at a yielding (positive) slot priority so DSH's official folder-capable browse dialog keeps the seat, and the per-client decision no longer treats loopback alone as proof the host OS dialog is reachable. |
+| **`0.7.7`** | **`0.2.1-rc.4`**, `0.2.1-rc.3`, `0.2.1-rc.2`, `0.2.1-alpha.5`, `0.2.1-alpha.4`, `0.2.1-alpha.3`, `0.2.1-alpha.1`, `0.2.0-rc.2`, `0.2.0-rc.1`, `0.1.7-rc.2`, `0.1.7-rc.1` | Keeps up with DSH `0.2.1-rc.4`: this upstream release only bumps version strings, and the host interfaces and types are byte-identical to rc.3; no plugin runtime code changed. |
 | **`0.7.6`** (published) | **`0.2.1-rc.3`**, `0.2.1-rc.2`, `0.2.1-alpha.5`, `0.2.1-alpha.4`, `0.2.1-alpha.3`, `0.2.1-alpha.1`, `0.2.0-rc.2`, `0.2.0-rc.1`, `0.1.7-rc.2`, `0.1.7-rc.1` | Compatibility release for DSH `0.2.1-rc.3`; no runtime code change. API/type/automated checks only; phone/browser acceptance pending. |
 | **`0.7.5`** (published) | **`0.2.1-rc.2`**, `0.2.1-alpha.5`, `0.2.1-alpha.4`, `0.2.1-alpha.3`, `0.2.1-alpha.1`, `0.2.0-rc.2`, `0.2.0-rc.1`, `0.1.7-rc.2` | Keeps up with DSH `0.2.1-rc.2`: compatibility statement only, no code change. |
 | **`0.7.4`** | **`0.2.1-alpha.5`**, `0.2.1-alpha.4`, `0.2.1-alpha.3`, `0.2.1-alpha.1`, `0.2.0-rc.2`, `0.2.0-rc.1`, `0.1.7-rc.2` | Keeps up with DSH `0.2.1-alpha.5`: compatibility statement only, no code change. |
@@ -341,8 +342,8 @@ The client half registers into the official additive `settings.section` seat; th
 Releases are tag-driven. Update `package.json`, move the matching CHANGELOG section out of `Unreleased`, write `release-notes/v<version>.md` with both language anchors, then push the release commit and tag:
 
 ```sh
-git tag v0.7.7
-git push origin v0.7.7
+git tag v0.7.8
+git push origin v0.7.8
 ```
 
 The release workflow checks that the tag matches the `package.json` version and that the notes carry both anchors, then runs `pnpm run verify`, packs the plugin, publishes through npm trusted publishing (OIDC), and creates a GitHub Release with the tarball attached.

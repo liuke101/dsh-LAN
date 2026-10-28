@@ -6,12 +6,17 @@
  *
  * The two decisions this module owns:
  *
- * 1. WHICH interaction this browser gets. The official directory-picker seam is
- *    resolved once per PROCESS, so DSH's own answer is "native" whenever its web
- *    server binds loopback — even for a phone on the LAN. The browser half
- *    therefore shadows the official flow occupant and answers the question per
- *    CLIENT: a browser sitting at this machine keeps the OS folder dialog, a
- *    remote one gets the in-page browser.
+ * 1. WHICH interaction this browser gets. DSH's own directory-picker seam
+ *    resolves once per PROCESS (`dsh-host-directory-picker-auto`), and current
+ *    releases sample the SSH-launch marker: a headless server reached through
+ *    a tunnel resolves to `browse` and mounts the official in-app dialog —
+ *    which, unlike this module's bottom sheet, also creates folders. The fork
+ *    therefore registers its shadow at a POSITIVE priority
+ *    ({@link FLOW_PRIORITY}) so the official surface always wins the seat,
+ *    and keeps this decision honest as the fallback: loopback alone no longer
+ *    means "the OS dialog is reachable", because a forwarded tunnel reaches
+ *    the page over loopback while the server sits elsewhere and has no
+ *    display to show a chooser on.
  * 2. WHAT a failure means to the person holding the phone. Every refusal the
  *    management route can return maps to one sentence plus the exact way to fix
  *    it; a silent no-op is what this whole feature exists to remove.
@@ -36,12 +41,16 @@ export const SIDEBAR_FLOW = 'sidebar.workspaces.directoryFlow'
  * Slot priority for the shadowing occupant.
  *
  * DSH's own picker surface registers at the default 0, and a `single` slot
- * renders the LOWEST priority, so any negative value shadows it. -20 (rather
- * than the reference implementation's -10) keeps this plugin's occupant
- * winning if both are ever installed at once, which is a documented conflict
- * instead of a duplicate-registration throw.
+ * renders the LOWEST priority — so a POSITIVE value here makes this plugin's
+ * occupant YIELD the seat to the official dialog instead of shadowing it.
+ * That is the fork's fix: the official browse surface drives the host's
+ * `list`/`createDirectory` primitives and can create folders, which this
+ * module's bottom sheet never could. The registration itself is kept (only
+ * never rendered while the official surface is mounted) so a deployment on an
+ * older host that wrongly resolved `native` can restore the shadow by
+ * flipping this constant back to a negative value.
  */
-export const FLOW_PRIORITY = -20
+export const FLOW_PRIORITY = 20
 
 /** The DOM facts {@link directoryFlowDecision} needs. */
 export interface ClientEnvironment {
@@ -67,20 +76,21 @@ export function isLoopbackHostname(hostname: string): boolean {
 }
 
 /**
- * Whether this browser is sitting at the machine that runs DSH.
+ * Whether this browser can actually reach an OS dialog on the host.
  *
- * This is the same evidence DSH's own connection client uses to decide that a
- * page "owns the host", plus the desktop-shell markers: a preload picker or an
- * Electron host means an OS dialog can actually be shown to the person looking
- * at this window.
+ * Only the desktop-shell markers prove that: a preload picker or an Electron
+ * host means an OS dialog can be shown to the person looking at this window.
+ * Loopback is NOT such evidence — a forwarded SSH tunnel reaches the page
+ * over `127.0.0.1` while the server sits on another (usually headless)
+ * machine, where a `pick()` can only fail with
+ * `directoryPicker.pick needs the native capability`.
  *
  * @param env - the sampled DOM facts.
- * @returns `native` to delegate to DSH's OS dialog, `browse` to render ours.
+ * @returns `native` to delegate to DSH's OS dialog, `browse` otherwise.
  */
 export function directoryFlowDecision(env: ClientEnvironment): FlowDecision {
   if (env.hasDesktopPicker) return 'native'
   if (env.hasNativeHost) return 'native'
-  if (isLoopbackHostname(env.hostname)) return 'native'
   if (env.protocol === 'file:' || env.protocol === 'app:' || env.protocol === 'vscode-webview:') return 'native'
   if (env.userAgent.includes('Electron')) return 'native'
   return 'browse'
