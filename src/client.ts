@@ -1485,7 +1485,6 @@ function SettingsSection(): ReactElement {
 
   // Update detection chip + panel (SPEC F8). Read-only: the host never installs
   // anything; it reports and offers a copyable command.
-  const repoUrl = 'https://github.com/idoall/dsh-lan-guard'
   const updateChip = createElement('div', { className: 'lg-update', key: 'update' }, [
     createElement('span', {
       key: 'v',
@@ -1504,21 +1503,6 @@ function SettingsSection(): ReactElement {
       disabled: updateBusy,
       onClick: () => void loadUpdate(true),
     }, updateBusy ? '检查中…' : '检查更新'),
-    createElement('a', { key: 'g', className: 'lg-link', href: repoUrl, target: '_blank', rel: 'noreferrer' }, 'GitHub'),
-    createElement('a', {
-      key: 'c',
-      className: 'lg-link',
-      href: `${repoUrl}/blob/main/CHANGELOG.md`,
-      target: '_blank',
-      rel: 'noreferrer',
-    }, '更新日志'),
-    createElement('a', {
-      key: 'i',
-      className: 'lg-link',
-      href: `${repoUrl}/issues`,
-      target: '_blank',
-      rel: 'noreferrer',
-    }, '反馈 Issue'),
   ])
 
   const updatePanel = update === null || !update.hasUpdate
